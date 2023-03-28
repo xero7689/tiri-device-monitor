@@ -16,7 +16,7 @@ while True:
     resistance = random.randint(1000, 1200)
     concentration = random.randint(1000, 2000)
 
-    with open(file_path, "a") as f:
+    with open(file_path, "a", encoding="utf-8") as f:
         f.write(f"{timestamp}，溫度：{temperature}，單位攝氏。C，濕度：{humidity}，%，原始電阻：{resistance}，轉換濃度：{concentration}\n")
     
     time.sleep(1)
