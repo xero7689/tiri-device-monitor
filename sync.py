@@ -1,45 +1,57 @@
 import sys
 import os
+
+from urllib.parse import urljoin
+import argparse
 import datetime
 import time
 
 import requests
 
 from record_reader import RecordReader
-from settings import DEVICE_NAME, DEVICE_ID, TIRI_AUTH, DATA_PATH, TIMEZONE
+from settings import DATA_PATH, TIMEZONE, TIRI_API_ENDPOINT, API_PATH_AIR_RECORD, API_PATH_HEALTH_CHECK
 
-TIRI_URL = "https://tiriiotsensor.com/smart-dust/air-records/?limit=1"
-PAYLOAD = {"device_name": DEVICE_NAME}
+AIR_RECORD_ENDPOINT = urljoin(TIRI_API_ENDPOINT, API_PATH_AIR_RECORD)
+HEALTH_CHECK_ENDPOINT = urljoin(TIRI_API_ENDPOINT, API_PATH_HEALTH_CHECK)
+
 
 def is_tiri_server_available():
     try:
-        response = requests.get(TIRI_URL, auth=TIRI_AUTH, data=PAYLOAD)
+        response = requests.get(HEALTH_CHECK_ENDPOINT)
     except requests.exceptions.ConnectionError:
         print("TIRI server unavailable!")
         return False
     return True
 
-def post_air_records(payload):
-    AIR_RECORD_URL = "https://tiriiotsensor.com/smart-dust/air-records/"
+def post_air_records(auth, payload):
     try:
-        response = requests.post(AIR_RECORD_URL, auth=TIRI_AUTH, json=payload)
+        response = requests.post(AIR_RECORD_ENDPOINT, auth=auth, json=payload)
     except requests.exceptions.ConnectionError:
         print("TIRI server unavailable!")
         return False
-    print(f'[POST][${response.status_code}] {payload["timestamp"]}')
+    print(f'[POST][+] {payload["timestamp"]}')
     return True
 
 
-def sync_data():
-    response = requests.get(TIRI_URL, auth=TIRI_AUTH, data=PAYLOAD)
+def sync_data(device_info, tiri_auth):
+    device_name, device_id = device_info
+    payload = {
+        "device_name": device_name,
+    }
+
+    query_string = f"?limit=1"
+    air_record_url_limit_1 = urljoin(AIR_RECORD_ENDPOINT, query_string)
+    print(air_record_url_limit_1)
+
+    response = requests.get(air_record_url_limit_1, auth=tiri_auth, data=payload)
     response_obj = response.json()
 
     if response.status_code == 401:
-        print("Invalid credentials! Please check your AUTH settings in .env")
+        print("Invalid credentials!")
         return
 
     if response.status_code == 200 and response_obj["results"] is not None:
-        print(f'Device')
+        print(f'Device Name: {device_name}\nDevice ID: ({device_id})')
         timestamp = response_obj["results"][0]["timestamp"]
         server_dt = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
 
@@ -106,14 +118,14 @@ def sync_data():
                     trans_concentrations = sync_data['concentration']
                     formatted_timestamp = sync_ts.strftime('%Y-%m-%dT%H:%M:%S')
                     payload = {
-                        'device': DEVICE_ID,
+                        'device': device_id,
                         'temperature': temperature,
                         'humidity': humidity,
                         'resistance': original_resistance,
                         'concentration': trans_concentrations,
                         'timestamp': formatted_timestamp
                     }
-                    post_air_records(payload)
+                    post_air_records(tiri_auth, payload)
 
                 previous_records = records
                 time.sleep(5)
@@ -123,5 +135,15 @@ def sync_data():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Sync data with TIRI server')
+    parser.add_argument('--device-name', required=True, help='Name of the device')
+    parser.add_argument('--device-id', required=True, help='ID of the device')
+    parser.add_argument('--username', required=True, help='Username for TIRI authentication')
+    parser.add_argument('--password', required=True, help='Password for TIRI authentication')
+    args = parser.parse_args()
+
+    tiri_auth = (args.username, args.password)
+    device_info = (args.device_name, args.device_id)
+
     if is_tiri_server_available():
-        sync_data()
+        sync_data(device_info, tiri_auth)
