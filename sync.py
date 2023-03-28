@@ -2,14 +2,16 @@ import sys
 import os
 
 from urllib.parse import urljoin
-import argparse
 import datetime
 import time
 
 import requests
 
 from record_reader import RecordReader
-from settings import DATA_PATH, TIMEZONE, TIRI_API_ENDPOINT, API_PATH_AIR_RECORD, API_PATH_HEALTH_CHECK
+from settings import (TIRI_AUTH, DATA_PATH, TIMEZONE, TIRI_API_ENDPOINT, 
+                      API_PATH_AIR_RECORD, API_PATH_HEALTH_CHECK, 
+                      DEVICE_NAME, DEVICE_ID,
+                      FILE_HEADER, FILE_DEVICE_NAME, FILE_SERIAL_NUM)
 
 AIR_RECORD_ENDPOINT = urljoin(TIRI_API_ENDPOINT, API_PATH_AIR_RECORD)
 HEALTH_CHECK_ENDPOINT = urljoin(TIRI_API_ENDPOINT, API_PATH_HEALTH_CHECK)
@@ -23,9 +25,9 @@ def is_tiri_server_available():
         return False
     return True
 
-def post_air_records(auth, payload):
+def post_air_records(payload):
     try:
-        response = requests.post(AIR_RECORD_ENDPOINT, auth=auth, json=payload)
+        response = requests.post(AIR_RECORD_ENDPOINT, auth=TIRI_AUTH, json=payload)
     except requests.exceptions.ConnectionError:
         print("TIRI server unavailable!")
         return False
@@ -33,17 +35,16 @@ def post_air_records(auth, payload):
     return True
 
 
-def sync_data(device_info, tiri_auth, file_prefix):
-    device_name, device_id = device_info
+def sync_data():
     payload = {
-        "device_name": device_name,
+        "device_name": DEVICE_NAME,
     }
 
     query_string = f"?limit=1"
     air_record_url_limit_1 = urljoin(AIR_RECORD_ENDPOINT, query_string)
     print(air_record_url_limit_1)
 
-    response = requests.get(air_record_url_limit_1, auth=tiri_auth, data=payload)
+    response = requests.get(air_record_url_limit_1, auth=TIRI_AUTH, data=payload)
     response_obj = response.json()
 
     if response.status_code == 401:
@@ -51,7 +52,7 @@ def sync_data(device_info, tiri_auth, file_prefix):
         return
 
     if response.status_code == 200 and response_obj["results"] is not None:
-        print(f'Device Name: {device_name}\nDevice ID: ({device_id})')
+        print(f'Device Name: {DEVICE_NAME}\nDevice ID: ({DEVICE_ID})')
         timestamp = response_obj["results"][0]["timestamp"]
         server_dt = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
 
@@ -91,9 +92,7 @@ def sync_data(device_info, tiri_auth, file_prefix):
                 local_dt = TIMEZONE.localize(local_dt)
 
                 # Format filename using local_dt
-                file_header, file_serial_num, file_device_name = file_prefix
-
-                fn = file_header + "_" + file_serial_num + "_" + file_device_name
+                fn = FILE_HEADER + "_" + FILE_SERIAL_NUM + "_" + FILE_DEVICE_NAME
                 fn = fn + "_" + local_dt.strftime('%Y%m%d') + '.txt'
                 fp = os.path.join(DATA_PATH, fn)
 
@@ -122,14 +121,14 @@ def sync_data(device_info, tiri_auth, file_prefix):
                     trans_concentrations = sync_data['concentration']
                     formatted_timestamp = sync_ts.strftime('%Y-%m-%dT%H:%M:%S')
                     payload = {
-                        'device': device_id,
+                        'device': DEVICE_ID,
                         'temperature': temperature,
                         'humidity': humidity,
                         'resistance': original_resistance,
                         'concentration': trans_concentrations,
                         'timestamp': formatted_timestamp
                     }
-                    post_air_records(tiri_auth, payload)
+                    post_air_records(payload)
 
                 previous_records = records
                 time.sleep(5)
@@ -139,21 +138,5 @@ def sync_data(device_info, tiri_auth, file_prefix):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Sync data with TIRI server')
-    parser.add_argument('--device-name', required=True, help='Name of the device')
-    parser.add_argument('--device-id', required=True, help='ID of the device')
-
-    parser.add_argument('--file-header', required=True, help='Header of the data file')
-    parser.add_argument('--file-serial-num', required=True, help='Serial number of the data file')
-    parser.add_argument('--file-device-name', required=True, help='Device name of the data file name')
-
-    parser.add_argument('--username', required=True, help='Username for TIRI authentication')
-    parser.add_argument('--password', required=True, help='Password for TIRI authentication')
-    args = parser.parse_args()
-
-    tiri_auth = (args.username, args.password)
-    device_info = (args.device_name, args.device_id)
-    file_prefix = (args.file_header, args.file_serial_num, args.file_device_name)
-
     if is_tiri_server_available():
-        sync_data(device_info, tiri_auth, file_prefix)
+        sync_data()
