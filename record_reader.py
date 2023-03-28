@@ -79,7 +79,8 @@ class RecordReader:
             file_contents = file.read().decode('utf-8')
 
             fn = os.path.basename(self.file_path)
-            name, ext = fn.split(".")
+            # name, ext = fn.split(".")
+            name = fn.split('_')[-1].split('.')[0]
             dt_obj = datetime.datetime.strptime(name, '%Y%m%d')
             record_date = dt_obj.date()
             data = OrderedDict()

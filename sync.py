@@ -33,7 +33,7 @@ def post_air_records(auth, payload):
     return True
 
 
-def sync_data(device_info, tiri_auth):
+def sync_data(device_info, tiri_auth, file_prefix):
     device_name, device_id = device_info
     payload = {
         "device_name": device_name,
@@ -66,7 +66,8 @@ def sync_data(device_info, tiri_auth):
         # Check if remaining data is newer than the data from TIRI server
         need_update_files = []
         for fn in os.listdir(DATA_PATH):
-            file_timestamp_str = fn.split('.')[0]
+            #file_timestamp_str = fn.split('.')[0]
+            file_timestamp_str = fn.split('_')[-1].split('.')[0]
             file_timestamp = TIMEZONE.localize(datetime.datetime.strptime(file_timestamp_str, '%Y%m%d'))
             if file_timestamp >= server_dt:
                 need_update_files.append(fn)
@@ -90,7 +91,10 @@ def sync_data(device_info, tiri_auth):
                 local_dt = TIMEZONE.localize(local_dt)
 
                 # Format filename using local_dt
-                fn = local_dt.strftime('%Y%m%d') + '.txt'
+                file_header, file_serial_num, file_device_name = file_prefix
+
+                fn = file_header + "_" + file_serial_num + "_" + file_device_name
+                fn = fn + "_" + local_dt.strftime('%Y%m%d') + '.txt'
                 fp = os.path.join(DATA_PATH, fn)
 
                 # Check if file exists
@@ -138,12 +142,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sync data with TIRI server')
     parser.add_argument('--device-name', required=True, help='Name of the device')
     parser.add_argument('--device-id', required=True, help='ID of the device')
+
+    parser.add_argument('--file-header', required=True, help='Header of the data file')
+    parser.add_argument('--file-serial-num', required=True, help='Serial number of the data file')
+    parser.add_argument('--file-device-name', required=True, help='Device name of the data file name')
+
     parser.add_argument('--username', required=True, help='Username for TIRI authentication')
     parser.add_argument('--password', required=True, help='Password for TIRI authentication')
     args = parser.parse_args()
 
     tiri_auth = (args.username, args.password)
     device_info = (args.device_name, args.device_id)
+    file_prefix = (args.file_header, args.file_serial_num, args.file_device_name)
 
     if is_tiri_server_available():
-        sync_data(device_info, tiri_auth)
+        sync_data(device_info, tiri_auth, file_prefix)

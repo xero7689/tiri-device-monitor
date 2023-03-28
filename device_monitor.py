@@ -3,7 +3,15 @@ import random
 import time
 
 data_dir = "./data"
-file_name = time.strftime("%Y%m%d") + ".txt"
+
+# File_1_SensorA_20230318
+file_header = "File"
+file_serial_num = "1"
+file_device_name = "SensorA"
+
+file_name = file_header + "_" + file_serial_num + "_" + file_device_name
+file_name = file_name + "_" + time.strftime("%Y%m%d") + ".txt"
+
 file_path = os.path.join(data_dir, file_name)
 
 if not os.path.exists(file_path):
