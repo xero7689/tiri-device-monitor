@@ -10,7 +10,7 @@ import requests
 from record_reader import RecordReader
 from settings import (TIRI_AUTH, DATA_PATH, TIMEZONE, TIRI_API_ENDPOINT,
                       API_PATH_AIR_RECORD, API_PATH_HEALTH_CHECK,
-                      DEVICE_NAME, DEVICE_ID,
+                      DEVICE_NAME, DEVICE_ID, SYNC_INTERVAL,
                       FILE_HEADER, FILE_DEVICE_NAME, FILE_SERIAL_NUM)
 
 AIR_RECORD_ENDPOINT = urljoin(TIRI_API_ENDPOINT, API_PATH_AIR_RECORD)
@@ -91,12 +91,12 @@ def sync_data():
 
                 # Read last 60 records
                 reader = RecordReader(fp, TIMEZONE)
-                records = reader.read_records_last_n_line(60)
+                records = reader.read_records_last_n_line(SYNC_INTERVAL+3)
 
                 # Compare with previous records
                 if previous_records == records:
                     print("No new records, skip sync!")
-                    time.sleep(5)
+                    time.sleep(SYNC_INTERVAL)
                     continue
 
                 # Construct payload and send to TIRI server

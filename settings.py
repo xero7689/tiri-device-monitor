@@ -16,6 +16,7 @@ DATA_PATH = os.environ.get("DATA_PATH")
 FILE_HEADER = os.environ.get("FILE_HEADER")
 FILE_SERIAL_NUM = os.environ.get("FILE_SERIAL_NUM")
 FILE_DEVICE_NAME = os.environ.get("FILE_DEVICE_NAME")
+SYNC_INTERVAL = int(os.environ.get("SYNC_INTERVAL"))
 
 TIMEZONE = pytz.timezone('Asia/Taipei')
 TIRI_API_ENDPOINT='https://tiriiotsensor.com/'
