@@ -53,34 +53,37 @@ def sync_data():
 
     if response.status_code == 200 and response_obj["results"] is not None:
         print(f'Device Name: {DEVICE_NAME}\nDevice ID: ({DEVICE_ID})')
-        timestamp = response_obj["results"][0]["timestamp"]
-        server_dt = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
+        print(response_obj["results"])
 
-        # Compare server time with local time
-        local_dt = datetime.datetime.now()
-        local_dt = TIMEZONE.localize(local_dt)
-        if server_dt > local_dt:
-            print("[Invalid] Data from TIRI server is newer, please check!")
-            sys.exit(1)
+        if response_obj["results"] != []:
+            timestamp = response_obj["results"][0]["timestamp"]
+            server_dt = datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
 
-        # Sync data have not been updated to TIRI server
-        # Check if remaining data is newer than the data from TIRI server
-        need_update_files = []
-        for fn in os.listdir(DATA_PATH):
-            #file_timestamp_str = fn.split('.')[0]
-            file_timestamp_str = fn.split('_')[-1].split('.')[0]
-            file_timestamp = TIMEZONE.localize(datetime.datetime.strptime(file_timestamp_str, '%Y%m%d'))
-            if file_timestamp >= server_dt:
-                need_update_files.append(fn)
+            # Compare server time with local time
+            local_dt = datetime.datetime.now()
+            local_dt = TIMEZONE.localize(local_dt)
+            if server_dt > local_dt:
+                print("[Invalid] Data from TIRI server is newer, please check!")
+                sys.exit(1)
 
-        #
-        if need_update_files is not None:
-            # Do full sync to need_update_files
-            for fn in need_update_files:
-                fp = os.path.join(DATA_PATH, fn)
-                reader = RecordReader(fp, TIMEZONE)
-                print(f'--- {fn} ---')
-            print(f'[fake sync] {fn}')
+            # Sync data have not been updated to TIRI server
+            # Check if remaining data is newer than the data from TIRI server
+            need_update_files = []
+            for fn in os.listdir(DATA_PATH):
+                #file_timestamp_str = fn.split('.')[0]
+                file_timestamp_str = fn.split('_')[-1].split('.')[0]
+                file_timestamp = TIMEZONE.localize(datetime.datetime.strptime(file_timestamp_str, '%Y%m%d'))
+                if file_timestamp >= server_dt:
+                    need_update_files.append(fn)
+
+            #
+            if need_update_files is not None:
+                # Do full sync to need_update_files
+                for fn in need_update_files:
+                    fp = os.path.join(DATA_PATH, fn)
+                    reader = RecordReader(fp, TIMEZONE)
+                    print(f'--- {fn} ---')
+
 
         # Do real-time sync to the latest data file
         # Read every last 3 records (last 3 mins)
