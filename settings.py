@@ -4,9 +4,10 @@ import pytz
 
 load_dotenv()
 
-TIRI_USER=os.environ.get('TIRI_USER')
-TIRI_PASSWORD=os.environ.get('TIRI_PASSWORD')
-TIRI_AUTH = (TIRI_USER, TIRI_PASSWORD)
+TIRI_TOKEN = os.environ.get("TIRI_TOKEN")
+TIRI_AUTH_HEADERS = {
+        'Authorization': f'TOKEN {TIRI_TOKEN}'
+    }
 
 DEVICE_NAME=os.environ.get("DEVICE_NAME")
 DEVICE_ID=os.environ.get("DEVICE_ID")

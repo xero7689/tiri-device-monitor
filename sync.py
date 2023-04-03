@@ -8,7 +8,7 @@ import time
 import requests
 
 from record_reader import RecordReader
-from settings import (TIRI_AUTH, DATA_PATH, TIMEZONE, TIRI_API_ENDPOINT,
+from settings import (TIRI_AUTH_HEADERS, DATA_PATH, TIMEZONE, TIRI_API_ENDPOINT,
                       API_PATH_AIR_RECORD, API_PATH_HEALTH_CHECK,
                       DEVICE_NAME, DEVICE_ID, SYNC_INTERVAL,
                       FILE_HEADER, FILE_DEVICE_NAME, FILE_SERIAL_NUM)
@@ -29,7 +29,7 @@ def is_tiri_server_available():
 def post_air_records(payload):
     try:
         response = requests.post(
-            AIR_RECORD_ENDPOINT, auth=TIRI_AUTH, json=payload)
+            AIR_RECORD_ENDPOINT, headers=TIRI_AUTH_HEADERS, json=payload)
     except requests.exceptions.HTTPError as http_err:
         print(f'HTTP error occurred: {http_err}')
         return False
@@ -58,7 +58,7 @@ def sync_data():
     print(air_record_url_limit_1)
 
     response = requests.get(air_record_url_limit_1,
-                            auth=TIRI_AUTH, data=payload)
+                            headers=TIRI_AUTH_HEADERS, data=payload)
     response_obj = response.json()
 
     if response.status_code == 401:
