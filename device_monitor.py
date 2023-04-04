@@ -30,6 +30,6 @@ while True:
         s = f"{timestamp},{temperature},{humidity},{resistance},{concentration}"
         print(f'[+] {s}')
 
-        f.write(f"{timestamp}，溫度：{temperature}，單位攝氏。C，濕度：{humidity}，%，原始電阻：{resistance}，轉換濃度：{concentration}\n")
+        f.write(f"{timestamp},溫度：{temperature},單位攝氏。C,濕度：{humidity},%,原始電阻：{resistance},轉換濃度：{concentration}\n")
     
     time.sleep(1)

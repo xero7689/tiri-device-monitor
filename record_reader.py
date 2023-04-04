@@ -59,7 +59,7 @@ class RecordReader:
                 data[datetime_obj_with_tz] = data_obj
         return data
 
-    def read_records_last_n_line(self, n):
+    def read_records_last_n_line(self, n, delimiter=","):
         # Open the file in binary mode and move the file pointer to the end of the file
         with open(self.file_path, 'rb') as file:
             file.seek(0, 2)
@@ -86,7 +86,7 @@ class RecordReader:
             data = OrderedDict()
 
             for row in file_contents.splitlines():
-                row = row.split("，")
+                row = row.split(delimiter)
                 datetime_obj_with_tz, data_obj = self.parse_row(row, record_date)
                 data[datetime_obj_with_tz] = data_obj
 
