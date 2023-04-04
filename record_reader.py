@@ -29,8 +29,10 @@ class RecordReader:
         temperature = float(temperature_str)
         humidity = float(humidity_str)
 
-        # Convert the resistance and concentration strings to integers
-        resistance = int(resistance_str)
+        # Convert the resistance strings to integers
+        resistance = float(resistance_str)
+
+        # Convert the concentration strings to integers
         concentration = int(concentration_str)
 
         data_obj = {
