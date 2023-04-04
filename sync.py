@@ -118,7 +118,7 @@ def sync_data():
                     post_air_records(payload)
 
                 previous_records = records
-                time.sleep(5)
+                time.sleep(SYNC_INTERVAL)
             except KeyboardInterrupt as ke:
                 print("Cancel sync!")
                 break
