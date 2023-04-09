@@ -33,7 +33,7 @@ class RecordReader:
         resistance = float(resistance_str)
 
         # Convert the concentration strings to integers
-        concentration = int(concentration_str)
+        concentration = float(concentration_str)
 
         data_obj = {
             "temperature": temperature,
